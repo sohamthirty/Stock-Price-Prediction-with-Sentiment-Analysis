@@ -1,0 +1,8 @@
+streamlit
+yfinance
+plotly
+pickle
+torch
+sklearn
+shap
+prettytable
