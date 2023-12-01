@@ -3,6 +3,10 @@
 Created on Fri Oct 18 02:36:59 2019
 
 @author: Admin
+
+To run the code:
+cd app
+streamlit run app.py
 """
 
 import streamlit as st
