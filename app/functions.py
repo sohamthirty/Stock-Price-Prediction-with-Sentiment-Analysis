@@ -97,6 +97,8 @@ def prepare_data_multivariate(df, choosen_stock, startdate, enddate, features, l
     return train_X, train_Y, train_dates, test_X, test_Y, test_dates, scaler, test_data
 
 
+
+
 def get_preds(test_X, test_data, test_dates, scaler, model):
     
     test_predict = model(test_X).view(-1).cpu().detach().numpy()

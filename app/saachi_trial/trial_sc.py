@@ -57,7 +57,7 @@ plot_raw_data()
 
 # Get model path
 def get_path(stock):
-     path = r"E:\NORTHEASTERN\FALL 2023\CAPSTONE\Stock-Price-Prediction-with-Sentiment-Analysis\Saved Models\{}_model.pkl".format(stock)
+     path = r"Stock-Price-Prediction-with-Sentiment-Analysis\Saved Models\{}_model.pkl".format(stock)
      return path
 
 # Get saved model weights
@@ -90,46 +90,14 @@ num_layers = 2
 hidden_sizes = [64, 64]
 
 
-file = open(r"E:\NORTHEASTERN\FALL 2023\CAPSTONE\Stock-Price-Prediction-with-Sentiment-Analysis\app\saachi_trial\GOOG_params.pkl",'rb')
+file = open(r"GOOG_params.pkl",'rb')
 object_file = pickle.load(file)
 
 model = DynamicLSTM(object_file['input_size'], object_file['hidden_size'], object_file['num_layers'], object_file['output_size'])
-model.load_state_dict(torch.load(r"E:\NORTHEASTERN\FALL 2023\CAPSTONE\Stock-Price-Prediction-with-Sentiment-Analysis\app\saachi_trial\GOOG_model"))
+model.load_state_dict(torch.load(r"GOOG_model"))
 model.eval()
 
-test_predict = model(test_X).view(-1).cpu().detach().numpy()
-# Inverse Scaling
-# --> 1.test_predict
-test_data1 = test_data[:, 1:-1]
-# Ensure the second array has the same number of rows as the first array
-test_data1 = test_data1[:test_predict.reshape(-1, 1).shape[0], :]
-# Append the arrays
-test_data1 = np.hstack((test_predict.reshape(-1, 1), test_data1)) 
-test_predict_inverse = scaler.inverse_transform(test_data1)[:,0]
-
-# --> 2.test_Y
-test_data2 = test_data[:, :-1]
-test_data2 = test_data2[:test_predict.reshape(-1, 1).shape[0], :]
-test_Y_inverse = scaler.inverse_transform(test_data2)[:,0]
-
-
-# Formatting the prices to a desired decimal form
-actual_prices = ["{:.4f}".format(price) for price in test_Y_inverse.flatten()]
-predicted_prices = ["{:.4f}".format(price) for price in test_predict_inverse.flatten()]
-formatted_dates = [test_dates.strftime('%Y-%m-%d') for test_dates in test_dates]
-
-
-# Display
-# Remove the first value and shift up the remaining values
-actual_prices = actual_prices[1:] + ['']
-table = PrettyTable()
-table.field_names = ["Date", "Actual Price", "Predicted Price"]
-for date, actual_price, predicted_price in zip(formatted_dates, actual_prices, predicted_prices):
-    # Add a separator line before the last row
-    if date == formatted_dates[-1]:
-        table.add_row(["-" * 10, "-" * 12, "-" * 16])
-    table.add_row([date, round(float(actual_price), 2) if actual_price != '' else 'TBA', round(float(predicted_price), 2)])
-    
+table = get_preds(test_X, test_data, test_dates, scaler, model)
 
 
 st.subheader('Predicted values')

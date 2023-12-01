@@ -25,6 +25,10 @@ from datetime import timedelta, date
 from prophet import Prophet
 from prophet.plot import plot_plotly
 from plotly import graph_objs as go
+import pickle
+import matplotlib.pyplot as plt
+from prettytable import PrettyTable
+from functions import *
 
 def set_pub():
     rc('font', weight='bold')    # bold fonts are easier to see
@@ -85,28 +89,30 @@ def plotData(ticker, start, end):
     
 
 
-def prediction_app():
-            START = start
+def prediction_app(start, end):
+            START = pd.to_datetime(start)
             TODAY = date.today().strftime("%Y-%m-%d")
 
             stocks = ('GOOG', 'AAPL', 'MSFT', 'GME')
             selected_stock = st.selectbox('Select dataset for prediction', stocks)
+
+            @st.cache_data
+            def load_data(ticker):
+                data = yf.download(ticker, START, TODAY)
+                data.reset_index(inplace=True)
+                return data
+                
+            #data_load_state = st.text('Loading data...')
+            data = load_data(selected_stock)
+            #data_load_state.text('Loading data... done!')
+
 
             prophet_model = st.checkbox('FB Prophet')
             if prophet_model:
                 n_years = st.slider('Years of prediction:', 1, 4)
                 period = n_years * 365
 
-                @st.cache_data
-                def load_data(ticker):
-                    data = yf.download(ticker, START, TODAY)
-                    data.reset_index(inplace=True)
-                    return data
-                
-                data_load_state = st.text('Loading data...')
-                data = load_data(selected_stock)
-                data_load_state.text('Loading data... done!')
-
+            
                 # Predict forecast with Prophet.
                 df_train = data[['Date','Close']]
                 df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
@@ -126,7 +132,30 @@ def prediction_app():
 
             lstm_model = st.checkbox('Multivariate LSTM')
             if lstm_model:
-                pass
+                features = ['Close', 'High', 'Low', 'Open', 'Volume']
+                look_back = 5 # No. of Lags to consider
+                predict_type = 'predict' #predict_type.lower()
+                train_X, train_Y, train_dates, test_X, test_Y, test_dates, scaler, test_data = prepare_data_multivariate(data, selected_stock, START, TODAY, features=features, look_back=look_back, predict_type=predict_type )
+
+                input_size = 5  # Number of input features (High, Low, Open, Close, Volume)
+                output_size = 1  # Number of output features (Close price)
+                num_epochs = 100
+                num_layers = 2 
+                hidden_sizes = [64, 64]
+
+
+                file = open(r"GOOG_params.pkl",'rb')
+                object_file = pickle.load(file)
+
+                model = DynamicLSTM(object_file['input_size'], object_file['hidden_size'], object_file['num_layers'], object_file['output_size'])
+                model.load_state_dict(torch.load(r"GOOG_model"))
+                model.eval()
+
+                table = get_preds(test_X, test_data, test_dates, scaler, model)
+
+
+                st.subheader('Predicted values')
+                st.write(table)
 
     
 
@@ -211,7 +240,7 @@ if check_dates() and pivot_date == True:
         see_future = st.sidebar.checkbox('Future Close Price Prediction')
         if see_future:
             st.title('Future Close Price Prediction')
-            prediction_app()
+            prediction_app(start, end)
 
         
         
