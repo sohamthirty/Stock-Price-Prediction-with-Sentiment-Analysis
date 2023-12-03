@@ -123,6 +123,7 @@ def get_preds(test_X, test_data, test_dates, scaler, model):
     formatted_dates = [test_dates.strftime('%Y-%m-%d') for test_dates in test_dates]
 
 
+
     # Display
     # Remove the first value and shift up the remaining values
     actual_prices = actual_prices[1:] + ['']
@@ -133,5 +134,10 @@ def get_preds(test_X, test_data, test_dates, scaler, model):
         if date == formatted_dates[-1]:
             table.add_row(["-" * 10, "-" * 12, "-" * 16])
         table.add_row([date, round(float(actual_price), 2) if actual_price != '' else 'TBA', round(float(predicted_price), 2)])
+    
+    df = pd.DataFrame([row for row in table.rows], columns=table.field_names)
+    df = df[df["Date"] != "----------"]
+    df["Actual Price"] = df["Actual Price"].replace('TBA', 0)
 
-    return table
+
+    return table, df

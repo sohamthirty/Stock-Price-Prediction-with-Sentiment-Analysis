@@ -143,19 +143,39 @@ def prediction_app(start, end):
                 num_layers = 2 
                 hidden_sizes = [64, 64]
 
+                path = r"{}_params.pkl".format(selected_stock)
+                stock_model = r"{}_model".format(selected_stock) 
 
-                file = open(r"GOOG_params.pkl",'rb')
+                file = open(path,'rb')
                 object_file = pickle.load(file)
 
                 model = DynamicLSTM(object_file['input_size'], object_file['hidden_size'], object_file['num_layers'], object_file['output_size'])
-                model.load_state_dict(torch.load(r"GOOG_model"))
+                model.load_state_dict(torch.load(stock_model))
                 model.eval()
 
-                table = get_preds(test_X, test_data, test_dates, scaler, model)
-
-
+                table, df = get_preds(test_X, test_data, test_dates, scaler, model)
                 st.subheader('Predicted values')
                 st.write(table)
+
+                dates = pd.to_datetime(df['Date'])
+
+                fig = plt.figure(figsize=(15,12))
+                plt.plot(dates, df['Actual Price'], label='True', linewidth=2)
+                plt.plot(dates, df['Predicted Price'], label='Predicted', linewidth=2)
+
+                #for i in range(0,len(dates)): 
+                plt.annotate('TBA', (dates[len(dates)], df['Actual Price'][len(dates)] + 0.5 ))
+                plt.annotate(df['Predicted Price'][len(dates)], (dates[len(dates)], df['Predicted Price'][len(dates)] + 0.2 ))
+
+
+                plt.rcParams.update({'font.size': 15})
+                plt.title("Test vs. Predicted Prices")
+                plt.xlabel("Date")
+                plt.ylabel("Price")
+                plt.legend()
+                plt.xticks(rotation=45)
+                plt.grid(True)
+                st.pyplot(fig)
 
     
 
