@@ -106,8 +106,7 @@ st.write(table)
 
 st.title("ChatGPT-like clone")
 
-client = OpenAI(api_key='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')
-                #"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")
+client = OpenAI(api_key='***')
 
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-3.5-turbo"
