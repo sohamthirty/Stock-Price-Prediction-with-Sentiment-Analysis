@@ -137,7 +137,7 @@ def get_preds(test_X, test_data, test_dates, scaler, model):
 
 
 def chatgpt():
-    openai.api_key = "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"
+    openai.api_key = "***"
 
     messages = [
     {"role": "system", "content": "You are a kind helpful assistant."},]
