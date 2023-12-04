@@ -12,6 +12,7 @@ import datetime as dt
 from itertools import combinations
 import pickle
 from prettytable import PrettyTable
+import openai
 
 
 class DynamicLSTM(nn.Module):
@@ -133,3 +134,26 @@ def get_preds(test_X, test_data, test_dates, scaler, model):
         table.add_row([date, round(float(actual_price), 2) if actual_price != '' else 'TBA', round(float(predicted_price), 2)])
 
     return table
+
+
+def chatgpt():
+    openai.api_key = "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"
+
+    messages = [
+    {"role": "system", "content": "You are a kind helpful assistant."},]
+
+    while True:
+        message = input("User : ")
+        if message:
+            messages.append(
+                {"role": "user", "content": message},
+            )
+            chat = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo", messages=messages
+            )
+        
+        reply = chat.choices[0].message.content
+        print(f"ChatGPT: {reply}")
+        messages.append({"role": "assistant", "content": reply})
+
+    return

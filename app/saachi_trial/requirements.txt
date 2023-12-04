@@ -6,3 +6,4 @@ torch
 sklearn
 shap
 prettytable
+openai
