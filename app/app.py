@@ -180,8 +180,7 @@ def prediction_app(start, end):
 
 def chatgpt_bot():
     #st.title("ChatGPT-like clone")
-
-    client = OpenAI(api_key='****') # Add your API key
+    client = OpenAI(api_key = st.secrets["OPENAI_API_KEY"]) # Add your API key
 
     if "openai_model" not in st.session_state:
         st.session_state["openai_model"] = "gpt-3.5-turbo"
