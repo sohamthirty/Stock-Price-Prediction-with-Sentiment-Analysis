@@ -10,6 +10,7 @@ import pickle
 import matplotlib.pyplot as plt
 from prettytable import PrettyTable
 from functions import *
+from openai import OpenAI
 
 START = "2015-01-01"
 TODAY = date.today().strftime("%Y-%m-%d")
@@ -66,8 +67,8 @@ def get_pickle(path):
 		model = pickle.load(f)
 	return model
 
-path = get_path(selected_stock)
-stock_model = get_pickle(path)
+#path = get_path(selected_stock)
+#stock_model = get_pickle(path)
 #print(stock_model.keys())
 
 #new_mod = 'E:\NORTHEASTERN\FALL 2023\CAPSTONE\Stock-Price-Prediction-with-Sentiment-Analysis\app\saachi_trial\GOOG_model'
@@ -102,6 +103,44 @@ table = get_preds(test_X, test_data, test_dates, scaler, model)
 
 st.subheader('Predicted values')
 st.write(table)
+
+st.title("ChatGPT-like clone")
+
+client = OpenAI(api_key='***')
+
+if "openai_model" not in st.session_state:
+    st.session_state["openai_model"] = "gpt-3.5-turbo"
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+if prompt := st.chat_input("What is up?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+        for response in client.chat.completions.create(
+            model=st.session_state["openai_model"],
+            messages=[
+                {"role": m["role"], "content": m["content"]}
+                for m in st.session_state.messages
+            ],
+            stream=True,
+        ):
+            full_response += (response.choices[0].delta.content or "")
+            message_placeholder.markdown(full_response + "▌")
+        message_placeholder.markdown(full_response)
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
+
+	
+
 
 
 

@@ -55,6 +55,8 @@ def prepare_data_multivariate(df, choosen_stock, startdate, enddate, features, l
     # Choose specific stock
     data = df #df[df["Stock"] == choosen_stock]
 
+    device = torch.device('cpu')
+
     # Test split
     if predict_type=='year':
         test_data = data[data["Date"].dt.year == 2019]
@@ -89,18 +91,19 @@ def prepare_data_multivariate(df, choosen_stock, startdate, enddate, features, l
     test_X, test_Y, test_dates = create_sequences(test_data, look_back)
 
     # Convert data to PyTorch tensors
-    train_X = torch.Tensor(train_X.astype(np.float32))
-    train_Y = torch.Tensor(train_Y)
-    test_X = torch.Tensor(test_X.astype(np.float32))
-    test_Y = torch.Tensor(test_Y)
+    train_X = torch.Tensor(train_X.astype(np.float32)).to(device)
+    train_Y = torch.Tensor(train_Y).to(device)
+    test_X = torch.Tensor(test_X.astype(np.float32)).to(device)
+    test_Y = torch.Tensor(test_Y).to(device)
     
     return train_X, train_Y, train_dates, test_X, test_Y, test_dates, scaler, test_data
 
 
 
 
-def get_preds(test_X, test_data, test_dates, scaler, model):
+def get_preds(test_X, test_data, test_dates, test_predict_inverse, test_Y_inverse,model):
     
+    '''
     test_predict = model(test_X).view(-1).cpu().detach().numpy()
     # Inverse Scaling
     # --> 1.test_predict
@@ -121,15 +124,34 @@ def get_preds(test_X, test_data, test_dates, scaler, model):
     actual_prices = ["{:.4f}".format(price) for price in test_Y_inverse.flatten()]
     predicted_prices = ["{:.4f}".format(price) for price in test_predict_inverse.flatten()]
     formatted_dates = [test_dates.strftime('%Y-%m-%d') for test_dates in test_dates]
+    '''
+    test_predict = model(test_X).view(-1).cpu().detach().numpy()
+    formatted_dates = [test_date.strftime('%Y-%m-%d') for test_date in test_dates]
+    formatted_test_Y = ["{:.4f}".format(price) for price in test_Y_inverse.flatten()]
+    formatted_test_predict = ["{:.4f}".format(price) for price in test_predict_inverse.flatten()]
+    
+    formatted_dates = formatted_dates[-14:-4]
+    formatted_test_predict = formatted_test_predict[-14:-4]
 
 
-
+    '''
     # Display
     # Remove the first value and shift up the remaining values
     actual_prices = actual_prices[1:] + ['']
     table = PrettyTable()
     table.field_names = ["Date", "Actual Price", "Predicted Price"]
     for date, actual_price, predicted_price in zip(formatted_dates, actual_prices, predicted_prices):
+        # Add a separator line before the last row
+        if date == formatted_dates[-1]:
+            table.add_row(["-" * 10, "-" * 12, "-" * 16])
+        table.add_row([date, round(float(actual_price), 2) if actual_price != '' else 'TBA', round(float(predicted_price), 2)])
+    '''
+
+    actual_prices = formatted_test_Y[0:] + ['']
+    actual_prices = actual_prices[-10:]
+    table = PrettyTable()
+    table.field_names = ["Date", "Actual Price", "Predicted Price"]
+    for date, actual_price, predicted_price in zip(formatted_dates, actual_prices, formatted_test_predict):
         # Add a separator line before the last row
         if date == formatted_dates[-1]:
             table.add_row(["-" * 10, "-" * 12, "-" * 16])
