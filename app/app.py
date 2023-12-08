@@ -45,7 +45,7 @@ def loadData(ticker, start, end):
      return df_stockdata
 
 def get_data_yahoo(ticker, start, end):
-    data = pdr.get_data_yahoo(ticker, start= str(start), end = str(end) )
+    data = pdr.get_data_yahoo(ticker, start= str(start), end = str(end))
     return st.dataframe(data)
 
         
@@ -68,6 +68,8 @@ def plotData(ticker, start, end):
     ax[0].set_title('Adj Close Price %s' % ticker, fontdict = {'fontsize' : 15})
     ax[0].plot(df_stockdata.index, df_stockdata.values,'g-',linewidth=1.6)
     ax[0].set_xlim(ax[0].get_xlim()[0] - 10, ax[0].get_xlim()[1] + 10)
+    ax[0].set_xlabel('Time Frame')
+    ax[0].set_ylabel('Price in USD')
     ax[0].grid(True)
     
     if ma1_checkbox:
@@ -84,6 +86,8 @@ def plotData(ticker, start, end):
     ax[1].set_title('Daily Total Returns %s' % ticker, fontdict = {'fontsize' : 15})
     ax[1].plot(df_stockdata.index[1:], df_stockdata.pct_change().values[1:],'r-')
     ax[1].set_xlim(ax[1].get_xlim()[0] - 10, ax[1].get_xlim()[1] + 10)
+    ax[1].set_xlabel('Time Frame')
+    ax[1].set_ylabel('Percentage Change')
     plt.tight_layout()
     ax[1].grid(True)
     st.pyplot(fig)
@@ -221,7 +225,7 @@ def show_news(ticker):
     for news in all_news:
         titles.append(news['title'])
     title_df = pd.DataFrame(titles, columns=['Top Headlines'])
-    st.write(title_df)
+    st.dataframe(title_df, width=800)
 
 
 
@@ -235,6 +239,58 @@ sp500_list = pd.read_csv('SP500_list.csv')
 
 ticker = st.selectbox('Select any stock ticker from S&P 500', sp500_list['Symbol'], index = 30).upper()
 pivot_sector = True
+
+image = Image.open('imageforapp.png')
+
+
+
+st.sidebar.image(image, caption='', 
+                 use_column_width=True)
+st.sidebar.header('A stock analysis app')
+st.sidebar.subheader('Choose the option to visualize')
+
+ticker_meta = yf.Ticker(ticker)
+        
+series_info  = pd.Series(ticker_meta.info,index = reversed(list(ticker_meta.info.keys())))
+series_info = series_info.loc[['symbol', 'shortName', 'financialCurrency','exchange',
+                                'marketCap', 'quoteType', 'industry', 'longBusinessSummary', 
+                                'fullTimeEmployees']]
+
+# Rename the columns
+new_col_names = {
+    'symbol': 'Ticker Symbol',
+    'shortName': 'Stock Name',
+    'financialCurrency': 'Financial Currency',
+    'exchange': 'Exchange',
+    'marketCap': 'Market Cap',
+    'quoteType': 'Quote Type',
+    'industry': 'Industry',
+    'longBusinessSummary':'About',
+    'fullTimeEmployees':'Company Size'
+}
+series_info = series_info.rename(new_col_names)
+
+
+if pivot_sector:
+    sector = sp500_list[sp500_list['Symbol'] == ticker]['Sector']
+    sector = sector.values[0]
+    series_info['Sector'] = sector
+
+'''#### About:'''
+series_info['About']
+
+series_info = series_info.drop('About')
+
+series_info.name = 'Stock'            
+st.dataframe(series_info, width=800)
+
+if pivot_sector:
+    todays_news = st.sidebar.checkbox("Today's News", value = True)
+    if todays_news:
+        st.title("Today's Stock News")
+        show_news(ticker)
+
+'''#### Choose the timeframe of the stock'''
 start = st.text_input('Enter the start date in yyyy-mm-dd format:', '2018-01-01')
 end = st.text_input('Enter the end date in yyyy-mm-dd format:', '2019-01-01')
 
@@ -270,38 +326,10 @@ if check_dates() and pivot_date == True:
         
     if len(loadData(ticker, start, end)) > 0: # if the ticker is invalid the function returns an empty series
         
-     
-        image = Image.open('imageforapp.png')
 
-
-
-        st.sidebar.image(image, caption='',
-
-                 use_column_width=True)
-        st.sidebar.header('A stock analysis app')
-        st.sidebar.subheader('Choose the option to visualize')
-        
-        ticker_meta = yf.Ticker(ticker)
-        
-        series_info  = pd.Series(ticker_meta.info,index = reversed(list(ticker_meta.info.keys())))
-        series_info = series_info.loc[['symbol', 'shortName', 'financialCurrency','exchange',
-                                        'marketCap', 'quoteType']]
-        if pivot_sector:
-            sector = sp500_list[sp500_list['Symbol'] == ticker]['Sector']
-            sector = sector.values[0]
-            series_info['sector'] = sector
-        
-           
-        series_info.name = 'Stock'            
-        st.dataframe(series_info)
-
-        todays_news = st.sidebar.checkbox("Today's News", value = True)
-        if todays_news:
-            st.title("Today's Stock News")
-            show_news(ticker)
-
-        principal_graphs_checkbox = st.sidebar.checkbox('Moving Average')
+        principal_graphs_checkbox = st.sidebar.checkbox('Stock Trends')
         if principal_graphs_checkbox:
+            '''# Stock Trends'''
             plotData(ticker, start, end)
         
                     
