@@ -11,3 +11,7 @@ Forecasting the highly volatile stock market is a significant computing challeng
 2. https://www.kaggle.com/datasets/miguelaenlle/massive-stock-news-analysis-db-for-nlpbacktests/data
 3. Yahoo Finance Stock Data API
 4. Reddit Praw API
+
+## Links
+1. https://github.com/Amey1398/stock-app-deployment
+2. https://stock-analytics.streamlit.app/
