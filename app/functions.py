@@ -101,9 +101,10 @@ def prepare_data_multivariate(df, choosen_stock, startdate, enddate, features, l
 
 
 
-def get_preds(test_X, test_data, test_dates, test_predict_inverse, test_Y_inverse,model):
+def get_preds(test_X, test_data, test_dates, scaler, model):
+        #test_X, test_data, test_dates, test_predict_inverse, test_Y_inverse,model):
     
-    '''
+    
     test_predict = model(test_X).view(-1).cpu().detach().numpy()
     # Inverse Scaling
     # --> 1.test_predict
@@ -132,9 +133,9 @@ def get_preds(test_X, test_data, test_dates, test_predict_inverse, test_Y_invers
     
     formatted_dates = formatted_dates[-14:-4]
     formatted_test_predict = formatted_test_predict[-14:-4]
-
-
     '''
+
+    
     # Display
     # Remove the first value and shift up the remaining values
     actual_prices = actual_prices[1:] + ['']
@@ -156,7 +157,7 @@ def get_preds(test_X, test_data, test_dates, test_predict_inverse, test_Y_invers
         if date == formatted_dates[-1]:
             table.add_row(["-" * 10, "-" * 12, "-" * 16])
         table.add_row([date, round(float(actual_price), 2) if actual_price != '' else 'TBA', round(float(predicted_price), 2)])
-    
+    '''
     df = pd.DataFrame([row for row in table.rows], columns=table.field_names)
     df = df[df["Date"] != "----------"]
     df["Actual Price"] = df["Actual Price"].replace('TBA', 0)

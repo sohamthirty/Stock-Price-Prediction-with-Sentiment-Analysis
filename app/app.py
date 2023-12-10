@@ -143,7 +143,7 @@ def prediction_app(start, end):
 
                 device = torch.device('cpu')
 
-                #train_X, train_Y, train_dates, test_X, test_Y, test_dates, scaler, test_data = prepare_data_multivariate(data, selected_stock, START, TODAY, features=features, look_back=look_back, predict_type=predict_type )
+                train_X, train_Y, train_dates, test_X, test_Y, test_dates, scaler, test_data = prepare_data_multivariate(data, selected_stock, START, TODAY, features=features, look_back=look_back, predict_type=predict_type )
 
                 path = r"Saved Params/{}_params.pkl".format(selected_stock)
                 stock_model = r"Saved Models/{}_model".format(selected_stock) 
@@ -156,7 +156,10 @@ def prediction_app(start, end):
                 model.load_state_dict(torch.load(stock_model,map_location=torch.device('cpu')))
                 model.eval()
 
-                table, df = get_preds(object_file['test_X'], object_file['test_data'], object_file["test_dates"], object_file['test_predict_inverse'],object_file['test_Y_inverse'], model)
+
+
+                table, df = get_preds(test_X, test_data, test_dates, scaler, model)
+                #table, df = get_preds(object_file['test_X'], object_file['test_data'], object_file["test_dates"], object_file['test_predict_inverse'],object_file['test_Y_inverse'], model)
                 st.subheader('Predicted values')
                 st.write(table)
 
