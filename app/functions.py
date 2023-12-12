@@ -33,22 +33,34 @@ class DynamicLSTM(nn.Module):
 
 
 
-def load_data(choosen_stock):    
+def load_data_lstm(choosen_stock):     
     yf.pdr_override() # Override pandas datareader with yfinance
     y_symbols = [choosen_stock]
     
     # State the dates
     startdate = dt.datetime(2018, 1, 1) # start date
-    enddate = dt.datetime(2023, 11, 30) # end date # +1
-    
+    enddate = dt.datetime(2023, 12, 12) # end date
+
     # Retrieve historical stock price data for the specified symbols and date range
     df = yf.download(y_symbols, start=startdate, end=enddate) 
     df = df.reset_index() # Reset the index to make 'Date' a regular column
     df['Stock'] = choosen_stock # add 'Stock' column
     df = df[['Date', 'Stock', 'Adj Close', 'Close', 'High', 'Low', 'Open', 'Volume']] # Reorder the columns
     df['Date'] = pd.to_datetime(df['Date'])
+        
+    # add new row
+    new_row = [{'Date':pd.to_datetime('2023-12-12T00:00:00.000000000'), 'Stock': choosen_stock , 'Adj Close': 0.0, 'Close': 0.0 , 'High': 0.0,'Low': 0.0, 'Open':0.0, 'Volume':0.0}]
+    df = pd.concat([df, pd.DataFrame(new_row)], ignore_index=True)
+    new_row = [{'Date':pd.to_datetime('2023-12-13T00:00:00.000000000'), 'Stock': choosen_stock , 'Adj Close': 0.0, 'Close': 0.0 , 'High': 0.0,'Low': 0.0, 'Open':0.0, 'Volume':0.0}]
+    df = pd.concat([df, pd.DataFrame(new_row)], ignore_index=True)
+    new_row = [{'Date':pd.to_datetime('2023-12-14T00:00:00.000000000'), 'Stock': choosen_stock , 'Adj Close': 0.0, 'Close': 0.0 , 'High': 0.0,'Low': 0.0, 'Open':0.0, 'Volume':0.0}]
+    df = pd.concat([df, pd.DataFrame(new_row)], ignore_index=True)
+    new_row = [{'Date':pd.to_datetime('2023-12-15T00:00:00.000000000'), 'Stock': choosen_stock , 'Adj Close': 0.0, 'Close': 0.0 , 'High': 0.0,'Low': 0.0, 'Open':0.0, 'Volume':0.0}]
+    df = pd.concat([df, pd.DataFrame(new_row)], ignore_index=True)
+    new_row = [{'Date':pd.to_datetime('2023-12-16T00:00:00.000000000'), 'Stock': choosen_stock , 'Adj Close': 0.0, 'Close': 0.0 , 'High': 0.0,'Low': 0.0, 'Open':0.0, 'Volume':0.0}]
+    df = pd.concat([df, pd.DataFrame(new_row)], ignore_index=True)
     
-    return df, startdate, enddate
+    return df, startdate, dt.datetime(2023, 12, 18)
 
 
 def prepare_data_multivariate(df, choosen_stock, startdate, enddate, features, look_back, predict_type='year'):
@@ -101,31 +113,8 @@ def prepare_data_multivariate(df, choosen_stock, startdate, enddate, features, l
 
 
 
-def get_preds(test_X, test_data, test_dates, scaler, model):
-        #test_X, test_data, test_dates, test_predict_inverse, test_Y_inverse,model):
-    
-    
-    test_predict = model(test_X).view(-1).cpu().detach().numpy()
-    # Inverse Scaling
-    # --> 1.test_predict
-    test_data1 = test_data[:, 1:-1]
-    # Ensure the second array has the same number of rows as the first array
-    test_data1 = test_data1[:test_predict.reshape(-1, 1).shape[0], :]
-    # Append the arrays
-    test_data1 = np.hstack((test_predict.reshape(-1, 1), test_data1)) 
-    test_predict_inverse = scaler.inverse_transform(test_data1)[:,0]
-
-    # --> 2.test_Y
-    test_data2 = test_data[:, :-1]
-    test_data2 = test_data2[:test_predict.reshape(-1, 1).shape[0], :]
-    test_Y_inverse = scaler.inverse_transform(test_data2)[:,0]
-
-
-    # Formatting the prices to a desired decimal form
-    actual_prices = ["{:.4f}".format(price) for price in test_Y_inverse.flatten()]
-    predicted_prices = ["{:.4f}".format(price) for price in test_predict_inverse.flatten()]
-    formatted_dates = [test_dates.strftime('%Y-%m-%d') for test_dates in test_dates]
-    '''
+# def get_preds(test_X, test_data, test_dates, scaler, model):
+def get_preds(test_X, test_data, test_dates, test_predict_inverse, test_Y_inverse,model):
     test_predict = model(test_X).view(-1).cpu().detach().numpy()
     formatted_dates = [test_date.strftime('%Y-%m-%d') for test_date in test_dates]
     formatted_test_Y = ["{:.4f}".format(price) for price in test_Y_inverse.flatten()]
@@ -133,20 +122,6 @@ def get_preds(test_X, test_data, test_dates, scaler, model):
     
     formatted_dates = formatted_dates[-14:-4]
     formatted_test_predict = formatted_test_predict[-14:-4]
-    '''
-
-    
-    # Display
-    # Remove the first value and shift up the remaining values
-    actual_prices = actual_prices[1:] + ['']
-    table = PrettyTable()
-    table.field_names = ["Date", "Actual Price", "Predicted Price"]
-    for date, actual_price, predicted_price in zip(formatted_dates, actual_prices, predicted_prices):
-        # Add a separator line before the last row
-        if date == formatted_dates[-1]:
-            table.add_row(["-" * 10, "-" * 12, "-" * 16])
-        table.add_row([date, round(float(actual_price), 2) if actual_price != '' else 'TBA', round(float(predicted_price), 2)])
-    '''
 
     actual_prices = formatted_test_Y[0:] + ['']
     actual_prices = actual_prices[-10:]
@@ -157,7 +132,7 @@ def get_preds(test_X, test_data, test_dates, scaler, model):
         if date == formatted_dates[-1]:
             table.add_row(["-" * 10, "-" * 12, "-" * 16])
         table.add_row([date, round(float(actual_price), 2) if actual_price != '' else 'TBA', round(float(predicted_price), 2)])
-    '''
+    
     df = pd.DataFrame([row for row in table.rows], columns=table.field_names)
     df = df[df["Date"] != "----------"]
     df["Actual Price"] = df["Actual Price"].replace('TBA', 0)

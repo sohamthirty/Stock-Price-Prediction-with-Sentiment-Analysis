@@ -41,7 +41,6 @@ pandas==2.1.3
 pandas-datareader==0.10.0
 peewee==3.17.0
 Pillow==10.1.0
-pickle
 plotly==5.18.0
 prettytable==3.9.0
 prophet==1.1.5
